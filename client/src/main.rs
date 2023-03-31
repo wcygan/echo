@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::Parser;
 
 #[tokio::main]
@@ -15,7 +15,13 @@ async fn main() -> Result<()> {
 
 async fn run(args: Args) -> Result<()> {
     let mut stdin = tokio_utils::recv_from_stdin(5);
-    let mut connection = connection::Connection::dial(args.address).await?;
+    let mut connection = match connection::Connection::dial(args.address).await {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("Failed to connect: {}", e);
+            return Err(anyhow!("Failed to connect: {}", e));
+        }
+    };
 
     loop {
         tokio::select! {
